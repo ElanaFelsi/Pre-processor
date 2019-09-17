@@ -1,13 +1,19 @@
 import glob
 import re
-
+import os
 
 def add_included_file(includes, lines):
     data = ""
     for file in includes:
-        with open(file) as the_file_to_include:
-            for line in the_file_to_include:
-                data += line
+        if file.startswith("<"):
+            file = re.sub('[^0-9a-zA-Z.]+', '', file)
+            the_file_to_include = open("system" + "/" + file + ".h", "r")
+        else:
+            file = re.sub('[^0-9a-zA-Z.]+', '', file)
+            with open(file) as the_file_to_include:
+                pass
+        for line in the_file_to_include:
+            data += line
     lines = "\n".join(lines)
     data += lines
     return data
@@ -20,7 +26,7 @@ def parse_include(lines):
         if line.startswith("#include"):
             file_to_be_included = line.split()
             file_to_be_included = file_to_be_included[file_to_be_included.index("#include") + 1]
-            file_to_be_included = re.sub('[^0-9a-zA-Z.]+', '', file_to_be_included)
+            #file_to_be_included = re.sub('[^0-9a-zA-Z.]+', '', file_to_be_included)
             includes.append(file_to_be_included)
     data = add_included_file(includes, lines)
     return data
