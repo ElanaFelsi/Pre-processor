@@ -3,8 +3,8 @@ import glob
 
 def get_include_path(_line):
     if "\"" in _line:
-        return _line.split("\"", 2)[1]
-    return "system/" + _line.split("<")[1].replace(">", ".h")
+        return "PreprocessorTask/" + _line.split("\"", 2)[1]
+    return "PreprocessorTask/system/" + _line.split("<")[1].replace(">", ".h")
 
 
 def include_list(header_filename, files):
@@ -43,9 +43,10 @@ def get_macros(ppfile):
 
 
 def set_macros(define_list, ppfile):
+    global line
     for define in define_list:
-        define = define.replace("#define ", "")
         if "__" not in define:
+            define = define.replace("#define ", "")
             if "(" in define:
                 macro_name = define.split("(")[0]
                 parameters = ((define.split("(")[1]).split(")")[0].replace(" ", "")).split(",")
@@ -55,13 +56,16 @@ def set_macros(define_list, ppfile):
                         line = line.replace(macro_name + "(", "")
                         values = ((line.split(")")[0].replace(" ", "")).split(","))
                         for i in range(len(values)):
-                            pass
+                            action.replace(parameters[i], values[i])
+                            line += action
             else:
                 macro_name = define.split(" ")[0]
                 value = define.split(" ")[1]
+                ppfile = ppfile.replace(macro_name, value)
+    return ppfile
 
 
-for filename in glob.glob('*.cpp'):
+for filename in glob.glob('**/*.cpp'):
     with open(filename, 'r+') as cpp:
         listofheaders = []
         include_list(filename, listofheaders)
@@ -70,6 +74,6 @@ for filename in glob.glob('*.cpp'):
         ppfile += get_include_content(listofheaders)
 
         define_list = get_macros(ppfile)
-
+        ppfile += set_macros(define_list, ppfile)
         newppFile = open(filename.replace("cpp", "pp"), "w")
         newppFile.write(ppfile)
