@@ -40,17 +40,17 @@ int get_num()
 
 int get_max(int num1, int num2)
 {
-	return MAX(num1, num2);
+	return  (num1) > (num2) ? (num1) : (num2);
 }
 
 int	get_min(int num1, int num2)
 {
-	return -(MAX(num1, num2) - num1 - num2);
+	return -( (num1) > (num2) ? (num1) : (num2) - num1 - num2);
 }
 
 int	get_sum(int num1, int num2)
 {
-	return SUM(num1, num2);
+	return  (num1) + (num2);
 }
 
 void decorate(E_STYLE style)
