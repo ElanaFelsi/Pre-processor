@@ -1,5 +1,7 @@
 import glob
 
+import re
+
 
 def get_include_path(_line):
     if "\"" in _line:
@@ -37,32 +39,39 @@ def get_macros(ppfile):
     for line in lines:
         if line.startswith("#define"):
             define_list.append(line)
-            ppfile.replace(line, "")
-        print(define_list)
     return define_list
 
 
+def get_param(line_param):
+    parm = (line_param.split("(")[1].split(")")[0].replace(" ", "")).split(",")
+    return parm
+
+
 def set_macros(define_list, ppfile):
-    global line
     for define in define_list:
+        ppfile = ppfile.replace(define, "")
         if "__" not in define:
             define = define.replace("#define ", "")
             if "(" in define:
                 macro_name = define.split("(")[0]
-                parameters = ((define.split("(")[1]).split(")")[0].replace(" ", "")).split(",")
+                parameters = get_param(define)
                 action = define.split(")", 1)[1]
-                for line in ppfile:
-                    if macro_name in line:
-                        line = line.replace(macro_name + "(", "")
-                        values = ((line.split(")")[0].replace(" ", "")).split(","))
-                        for i in range(len(values)):
-                            action.replace(parameters[i], values[i])
-                            line += action
+                reg = re.search(macro_name + "\(.*?\)", ppfile)
+                if reg:
+                    reg_match = reg.group(0)
+                    values = get_param(reg_match)
+                    new_action = action
+                    for i in range(len(values)):
+                        new_action = new_action.replace(parameters[i], values[i])
+                    ppfile = ppfile.replace(reg_match, new_action)
+
             else:
                 macro_name = define.split(" ")[0]
                 value = define.split(" ")[1]
                 ppfile = ppfile.replace(macro_name, value)
+
     return ppfile
+
 
 
 for filename in glob.glob('**/*.cpp'):
@@ -74,6 +83,7 @@ for filename in glob.glob('**/*.cpp'):
         ppfile += get_include_content(listofheaders)
 
         define_list = get_macros(ppfile)
-        ppfile += set_macros(define_list, ppfile)
+        ppfile = set_macros(define_list, ppfile)
+        #print(ppfile)
         newppFile = open(filename.replace("cpp", "pp"), "w")
         newppFile.write(ppfile)
